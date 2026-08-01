@@ -1,8 +1,8 @@
 # RemoteGraph Compatibility
 
-The server implements the subset of the LangGraph HTTP protocol listed below.
-Compatibility is tested against the locked `langgraph>=1.2,<2` environment and
-separate lowest-direct and highest-eligible dependency resolutions in CI.
+The implemented LangGraph HTTP operations are listed below. Compatibility is
+tested against the locked `langgraph>=1.2,<2` environment and separate
+lowest-direct and highest-eligible dependency resolutions in CI.
 
 ## Endpoints
 
@@ -25,14 +25,14 @@ Native stream modes `values`, `updates`, `messages`, `custom`, and `debug` are
 forwarded as named Server-Sent Events. `messages-tuple` is accepted at the HTTP
 boundary and mapped to the native `messages` mode.
 
-Graph factories receive the configured checkpointer, or `None` when persistence
-is disabled, and are called once during server configuration. The returned graph
-must provide asynchronous `ainvoke` and `astream` methods. A factory is required
-so the configured saver cannot be bypassed by a precompiled graph instance.
+Graph factories receive the configured checkpointer and are called once during
+server configuration. Stateless configurations pass `None`. The returned graph
+provides asynchronous `ainvoke` and `astream` methods.
 
-No checkpointer is configured by default. Threaded and stateless runs still
-execute, but do not retain graph state; state and history endpoints return status
-501. Supplying a thread ID does not change the configured persistence behavior.
+The default persistence mode is stateless. Configuring a saver enables checkpoint
+state, exact-checkpoint lookup, state history, state updates, and thread deletion.
+The selected mode applies consistently to generated and caller-supplied thread
+IDs.
 
 When a saver is configured, threaded runs retain checkpoints according to that
 saver. Stateless runs use the same saver with a generated thread ID and request
@@ -40,27 +40,14 @@ deletion when the stream closes. Server-owned thread metadata is stored separate
 in the configured `ThreadStore`.
 
 The first run durably records which assistant owns a thread in checkpoint metadata.
-Subsequent runs with another assistant are rejected, allowing `aupdate_state` to
-select the correct graph even after process-local thread metadata is lost. The
-server-owned marker is not returned as public checkpoint metadata.
+That ownership selects the correct graph for later state updates and protects the
+thread from cross-assistant mutation. Internal ownership metadata stays
+server-side.
 
 Only one run, state update, or deletion may mutate a thread at a time. A
 process-wide active-run limit rejects excess work with status 429. The standalone
 factory also enforces a request-body limit; execution timeouts are configurable.
 
-## Deliberate limitations
-
-The package does not implement:
-
-- run join, cancel, or wait endpoints;
-- background workers or delayed runs;
-- cron jobs or webhooks;
-- LangGraph Store APIs;
-- interrupt commands, resumable streams, or subgraph streams;
-- bulk state updates;
-- continue-on-disconnect;
-- durable user-supplied thread metadata unless a custom `ThreadStore` is supplied.
-
-Unsupported run controls are rejected during request validation. Authentication,
-object-level authorization, and per-client rate limits remain deployment policies;
-see the README security section.
+Use `request_authorizer` for application authentication and object-level policy.
+The standalone application also provides request-body limits, active-run limits,
+same-thread mutation coordination, and configurable execution timeouts.

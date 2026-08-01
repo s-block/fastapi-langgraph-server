@@ -1,8 +1,8 @@
 # In-Memory Checkpointer
 
 `BoundedInMemorySaver`, also exported as `InMemorySaver`, extends LangGraph's
-in-memory saver with resource and concurrency guardrails. It remains process-local
-and non-durable.
+in-memory saver with resource and concurrency guardrails. Its storage lifetime
+matches the current process.
 
 ## Defaults
 
@@ -18,15 +18,15 @@ and non-durable.
 | Identifier length | 256 characters | Rejects invalid or oversized identifiers |
 
 The saver uses a re-entrant lock around shared storage. Async methods move sync
-serialization and storage work to a worker thread. The default LangGraph
-`JsonPlusSerializer` is used with pickle fallback disabled.
+serialization and storage work to a worker thread. It uses LangGraph's
+`JsonPlusSerializer` with `pickle_fallback=False`.
 
-Checkpoint ancestors are not individually pruned because later checkpoints can
-depend on earlier channel versions. Capacity failures raise
-`CheckpointCapacityError` without modifying the protected thread.
+Eviction operates at complete-thread granularity to preserve checkpoint ancestry
+and channel versions. Capacity failures raise `CheckpointCapacityError` while
+leaving the protected thread unchanged.
 
-The byte limits count serialized payloads, not all Python object overhead. Monitor
-real process memory separately.
+Byte limits measure serialized payloads. Monitor process resident memory alongside
+the saver statistics for production capacity planning.
 
 ## Configuration
 
@@ -57,21 +57,20 @@ stats = checkpointer.stats()
 expired = checkpointer.purge_expired()
 ```
 
-Server configs are stateless by default. Instantiate and pass this saver
-explicitly to enable process-local persistence; there is no process-global
-checkpoint state.
+Instantiate and pass the saver to enable process-local persistence. Server
+configurations use stateless execution when `checkpointer` is omitted.
 
-## Operational boundary
+## Suitable workloads
 
-Use this saver only when all of the following are acceptable:
+The in-memory saver fits:
 
-- state is lost on restart;
-- workers and hosts do not share state;
-- in-flight state cannot fail over; and
-- expiry is operation-driven unless `purge_expired()` is scheduled by the host.
+- local development and integration tests;
+- single-process applications;
+- ephemeral workflows whose state lifetime matches the process; and
+- bounded workloads that benefit from TTL and LRU eviction.
 
-Use a compatible persistent async saver when recovery, horizontal scaling, or
-durability is required. Regardless of backend, authenticate callers, authorize
-thread ownership, limit request sizes and rates, avoid unnecessary secrets in
-state, and monitor capacity. `create_app` supplies request-body and run-concurrency
-limits; configure an execution timeout and per-client rate limit for the workload.
+For shared workers, recovery, or durable state, configure a compatible persistent
+async saver. Authenticate callers, authorize thread ownership, limit request sizes
+and rates, keep sensitive values out of state, and monitor capacity. `create_app`
+supplies request-body and run-concurrency limits; configure an execution timeout
+and per-client rate limit for the workload.

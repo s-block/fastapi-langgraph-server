@@ -19,15 +19,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stateless operation by default, with graph factories receiving the explicitly
   configured saver or `None`.
 - An optional dependency on the official LangGraph Redis checkpointer.
-- Explicit rejection of unsupported protocol controls.
+- Request validation for protocol controls and thread identifiers.
 - Cancellation-safe streaming and request-scoped stateless cleanup.
 - Reusable graph construction and graph/schema discovery.
 - Integration tests covering every endpoint, an actual `RemoteGraph` client,
   and the Redis-backed persistence path.
 - A runnable basic LangGraph example via `make run-testserver`.
 - Consistent configured-checkpointer use for caller-supplied and generated thread
-  IDs without implicitly enabling persistence.
-- Request authorization hooks, disabled-by-default CORS, security scans, CodeQL,
+  IDs.
+- Request authorization hooks, explicit CORS allowlists, security scans, CodeQL,
   dependency review, and trusted PyPI publishing.
 - Real-client coverage for latest and exact checkpoint state, paginated history,
   graph discovery, checkpoint-backed state updates, and thread deletion.

@@ -74,5 +74,4 @@ least-privilege token permissions.
 
 Publishing starts from a GitHub release whose tag exactly matches `v` plus the
 version in `pyproject.toml`. The workflow rebuilds and validates the distributions,
-then publishes to PyPI using trusted publishing with OIDC. It does not use a
-long-lived PyPI token.
+then publishes to PyPI using OIDC trusted publishing.

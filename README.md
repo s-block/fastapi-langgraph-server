@@ -3,22 +3,18 @@
 [![CI](https://github.com/s-block/fastapi-langgraph-server/actions/workflows/ci.yml/badge.svg)](https://github.com/s-block/fastapi-langgraph-server/actions/workflows/ci.yml)
 
 `fastapi-langgraph-server` exposes compiled LangGraph graphs through a typed,
-asynchronous FastAPI API compatible with the supported `RemoteGraph` operations.
-It can add routes to an existing FastAPI application or create a standalone app.
+asynchronous FastAPI API compatible with `RemoteGraph`. Use it to serve one or
+more graphs from a standalone ASGI application or add the routes to an existing
+FastAPI application.
 
-This is an unofficial community implementation for applications that need a
-focused RemoteGraph server without LangSmith Deployment. The package requires no
-LangSmith account, deployment licence key, control plane, PostgreSQL, or mandatory
-Redis. Infrastructure and model-provider costs still apply.
+Graph factories are compiled once during application configuration and receive
+the selected LangGraph checkpointer. The API provides streaming and non-streaming
+runs, assistant discovery, thread state, checkpoint history, state updates, and
+thread deletion.
 
-It is not a replacement for the full LangGraph Agent Server. Background workers,
-task queues, scheduling, deployment management, and Studio integration are outside
-its scope. The official standalone Agent Server has a different operational and
-[licensing model](https://docs.langchain.com/langsmith/deploy-standalone-server).
-
-The package supports Python 3.12, 3.13, and 3.14. It is currently alpha software;
-review the [compatibility guide](docs/RemoteGraph-Compatibility.md) before relying
-on a specific LangGraph Platform endpoint.
+The package supports Python 3.12, 3.13, and 3.14 and is currently alpha software.
+The [compatibility guide](docs/RemoteGraph-Compatibility.md) lists the tested SDK
+operations and dependency range.
 
 ## Installation
 
@@ -33,8 +29,8 @@ latest PyPI version.
 
 ## Quick start
 
-Every graph factory receives the configured checkpointer. The default is `None`,
-so this example does not retain graph state between runs.
+Every graph factory receives the configured checkpointer. This example uses the
+stateless default, so each run executes independently.
 
 ```python
 from typing import TypedDict
@@ -55,7 +51,7 @@ class State(TypedDict, total=False):
 
 
 def answer(state: State) -> State:
-    return {"answer": f"You asked: {state['question']}"}
+    return {"answer": f"Received: {state['question']}"}
 
 
 def build_graph(checkpointer: BaseCheckpointSaver[str] | None) -> object:
@@ -94,22 +90,24 @@ app = FastAPI()
 install_routes(app, config, prefix="/langgraph")
 ```
 
-## Checkpoint persistence
+## Persistence modes
 
-Checkpoint persistence is disabled by default. Graph factories receive `None`,
-and supplying a thread or conversation ID does not implicitly enable a saver.
-Runs still work, but graph state is not retained and state/history endpoints
-return status 501.
+The `checkpointer` supplied to `LangGraphServerConfig` or `StandaloneAppConfig`
+selects the persistence mode for the application. The configured value is used
+consistently for graph compilation, runs, state, and history operations.
 
-Pass any compatible `BaseCheckpointSaver[str]` to `LangGraphServerConfig` or
-`StandaloneAppConfig`. The same instance is used for graph compilation and for
-thread state/history, regardless of whether a request supplies a thread ID.
+| Mode | Configuration | Typical use |
+| --- | --- | --- |
+| Stateless | Omit `checkpointer` or pass `None` | Independent request execution |
+| In memory | Pass `InMemorySaver()` | Bounded, process-local state |
+| Redis | Pass `AsyncRedisSaver(...)` | Shared persistent state |
+| Custom | Pass a compatible `BaseCheckpointSaver[str]` | Application-specific storage |
 
 ### In-memory persistence
 
-The included `InMemorySaver` is process-local, bounded by configurable TTL,
-count, and serialized-payload limits, and loses all state on restart. Enable it
-explicitly when those semantics are acceptable:
+The included `InMemorySaver` stores state for the lifetime of the current process.
+It provides configurable TTL, thread-count, checkpoint-count, and serialized
+payload limits:
 
 ```python
 from fastapi_langgraph_server import InMemorySaver
@@ -126,7 +124,7 @@ See the [in-memory saver guide](docs/In-Memory-Checkpointer.md) for its limits.
 
 ### Redis persistence
 
-Install the optional official LangGraph Redis saver:
+Install the Redis integration:
 
 ```bash
 pip install 'fastapi-langgraph-server[redis]'
@@ -149,10 +147,8 @@ app = create_app(
 `create_app` enters and exits asynchronous saver context managers. This performs
 the Redis saver's required setup and cleanup. Redis deployments must satisfy the
 [official checkpointer requirements](https://github.com/redis-developer/langgraph-redis#dependencies).
-In particular, they need RedisJSON and RediSearch: use Redis 8 or Redis Stack for
-older Redis versions, and select logical database 0 in `REDIS_URL`. Plain Redis
-7 is not sufficient. The package's default installation does not include or
-require Redis.
+Use Redis 8 or Redis Stack with RedisJSON and RediSearch, and select logical
+database 0 in `REDIS_URL`.
 
 `create_app` closes saver-owned resources during shutdown. When routes are added
 to an existing app, the host application owns saver lifecycle management.
@@ -161,15 +157,14 @@ Custom `ThreadStore` implementations must store thread metadata, atomically clai
 and retrieve assistant ownership, and delete a complete thread. Implement the
 exported `ThreadStore` protocol so state updates and deletion remain safe.
 
-When a saver is configured, stateless `/runs/stream` requests use it with a
-generated thread ID and delete that thread's checkpoints when the stream closes.
-Savers intended for this endpoint should implement `adelete_thread`.
+With persistence enabled, `/runs/stream` uses a generated thread ID and deletes
+its checkpoints when the stream closes. Compatible savers implement
+`adelete_thread` for this lifecycle.
 
 ## Authentication and deployment security
 
-The package does not choose an authentication scheme. Without an authorizer, the
-routes are open. Configure `request_authorizer` before exposing them to untrusted
-clients:
+Use `request_authorizer` to connect the routes to the host application's
+authentication and authorization policy:
 
 ```python
 from fastapi import HTTPException, Request
@@ -187,11 +182,10 @@ config = LangGraphServerConfig(
 ```
 
 The authorizer runs before assistant, thread, state, history, and run handlers.
-`/health` and `/info` remain public. Use application middleware if every path must
-be protected. Authorization results and credentials are not copied into graph
-input or checkpoint state.
+`/health` and `/info` are public health and capability endpoints. Application
+middleware can apply a policy to every path.
 
-Standalone CORS support is disabled by default. Configure only trusted origins:
+Configure the standalone CORS allowlist with `cors_origins`:
 
 ```python
 StandaloneAppConfig(
@@ -213,10 +207,9 @@ StandaloneAppConfig(
 )
 ```
 
-Execution timeouts are opt-in; `run_timeout_seconds=None` leaves graph duration to
-the host. Set `max_request_body_bytes=None` only when the host supplies an equivalent
-control. Body-limit middleware is installed by `create_app`; applications using
-`install_routes` must enforce their own request-size limit.
+Set `run_timeout_seconds` to bound graph execution time. `create_app` installs the
+body-limit middleware; pair `install_routes` with the host application's request
+size middleware.
 
 Deployments should additionally enforce TLS, per-client rate limits, and
 per-thread ownership checks at the application or proxy boundary. Treat graph input
@@ -225,7 +218,7 @@ expose internal graph state and should be available only to trusted callers.
 
 See [SECURITY.md](SECURITY.md) for vulnerability reporting.
 
-## Supported surface
+## Features
 
 The package provides:
 
@@ -236,13 +229,11 @@ The package provides:
 - `values`, `updates`, `messages`, `messages-tuple`, `custom`, and `debug` stream
   modes;
 - configurable input/output transformations; and
-- optional bounded in-memory and official Redis checkpoint savers, plus injection
-  of other compatible LangGraph savers.
+- bounded in-memory and Redis checkpoint persistence, plus injection of other
+  compatible LangGraph savers.
 
-Background workers, webhooks, cron, run join/cancel/wait, LangGraph Store APIs,
-interrupt commands, bulk state updates, and resumable streams are not implemented.
-Unsupported request controls are rejected rather than ignored. The full endpoint
-table is in [RemoteGraph Compatibility](docs/RemoteGraph-Compatibility.md).
+The endpoint and SDK operation table is in
+[RemoteGraph Compatibility](docs/RemoteGraph-Compatibility.md).
 
 ## Development
 

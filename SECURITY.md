@@ -20,8 +20,9 @@ assessed.
 
 ## Deployment responsibility
 
-The package provides protocol routes but does not choose an authentication system,
-TLS termination, object-ownership policy, or per-client rate limiter. The standalone
-factory provides bounded request bodies and active runs; route-only installations
-must supply an equivalent request-size boundary. Review the README security section
-before exposing the API to untrusted clients.
+Deploy the routes behind TLS and connect `request_authorizer` to the application's
+authentication and object-ownership policy. Apply per-client rate limits at the
+application or proxy layer. The standalone factory provides request-body and
+active-run limits; pair route-only installations with the host application's
+request-size middleware. Review the README security section before exposing the
+API to untrusted clients.
