@@ -1,0 +1,127 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fastapi-langgraph-server"
+version = "0.1.0"
+description = "A typed FastAPI server compatible with LangGraph RemoteGraph clients"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [{ name = "Joshua Rowe" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Framework :: AsyncIO",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Typing :: Typed",
+]
+dependencies = [
+    "cachetools>=5.5,<7",
+    "fastapi>=0.139,<1",
+    "langchain-core>=1.2,<2",
+    "langgraph>=1.2,<2",
+    "pydantic>=2.10,<3",
+    "starlette>=0.46,<2",
+]
+
+[project.optional-dependencies]
+redis = ["langgraph-checkpoint-redis>=0.5.1,<1"]
+
+[project.urls]
+Changelog = "https://github.com/s-block/fastapi-langgraph-server/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/s-block/fastapi-langgraph-server/tree/main/docs"
+Issues = "https://github.com/s-block/fastapi-langgraph-server/issues"
+Source = "https://github.com/s-block/fastapi-langgraph-server"
+
+[dependency-groups]
+dev = [
+    "bandit>=1.9,<2",
+    "coverage>=7.10",
+    "detect-secrets>=1.5,<2",
+    "httpx>=0.28,<1",
+    "httpx2>=2.9,<3",
+    "langgraph-checkpoint-redis>=0.5.1,<1",
+    "mypy>=1.18",
+    "pip-audit>=2.10,<3",
+    "pre-commit>=4.3",
+    "pytest>=8.4",
+    "pytest-asyncio>=1.2",
+    "ruff>=0.13",
+    "twine>=6,<7",
+    "types-cachetools>=5.5",
+    "uvicorn>=0.35,<1",
+    "zizmor>=1.28,<2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fastapi_langgraph_server"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/fastapi_langgraph_server",
+    "examples",
+    "docs",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+]
+
+[tool.uv]
+package = true
+exclude-newer = "7 days"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "ASYNC",
+    "B",
+    "C4",
+    "E",
+    "F",
+    "I",
+    "N",
+    "RUF",
+    "S",
+    "SIM",
+    "TCH",
+    "UP",
+    "W",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"scripts/**/*.py" = ["S603"]
+"tests/**/*.py" = ["S101"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["src/fastapi_langgraph_server", "examples", "tests", "scripts"]
+strict = true
+warn_unused_ignores = true
+show_error_codes = true
+pretty = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-config",
+    "--strict-markers",
+    "--import-mode=importlib",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
