@@ -26,7 +26,7 @@ classifiers = [
 ]
 dependencies = [
     "cachetools>=7.1.6,<8",
-    "fastapi>=0.139,<1",
+    "fastapi>=0.140.0,<1",
     "langchain-core>=1.2,<2",
     "langgraph>=1.2,<2",
     "pydantic>=2.10,<3",
