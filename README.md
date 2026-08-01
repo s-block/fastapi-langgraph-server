@@ -18,14 +18,11 @@ operations and dependency range.
 
 ## Installation
 
-Until the first PyPI release, install from the public repository:
+Install the package from PyPI:
 
 ```bash
-pip install 'fastapi-langgraph-server @ git+https://github.com/s-block/fastapi-langgraph-server.git@main'
+pip install fastapi-langgraph-server
 ```
-
-After a release is published, `pip install fastapi-langgraph-server` installs the
-latest PyPI version.
 
 ## Quick start
 
