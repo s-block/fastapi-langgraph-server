@@ -36,5 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Process-wide and per-thread run coordination, configurable execution timeouts,
   and standalone request-body limits.
 - Dependency-boundary CI jobs and immutable pre-commit dependency pins.
+- Tag-driven PyPI publishing, cross-platform wheel installation checks including
+  Alpine Linux, and automatic GitHub releases with attached distributions.
 
 [Unreleased]: https://github.com/s-block/fastapi-langgraph-server/commits/main

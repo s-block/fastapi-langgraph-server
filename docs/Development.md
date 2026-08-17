@@ -72,6 +72,22 @@ least-privilege token permissions.
 
 ## Releases
 
-Publishing starts from a GitHub release whose tag exactly matches `v` plus the
-version in `pyproject.toml`. The workflow rebuilds and validates the distributions,
-then publishes to PyPI using OIDC trusted publishing.
+Publishing starts when a tag is pushed whose name exactly matches `v` plus the
+version in `pyproject.toml`. For example, after changing the project version to
+`0.2.0` and merging the release changes to `main`, create and push an annotated
+tag:
+
+```bash
+git switch main
+git pull --ff-only
+git tag -a v0.2.0 -m "Release 0.2.0"
+git push origin v0.2.0
+```
+
+The workflow reruns the complete package gate and builds one source archive and
+one `py3-none-any` wheel. The wheel is pure Python and supports every platform;
+release jobs install it on Linux, macOS, Windows, and Alpine Linux with musl before
+publishing. PyPI publishing uses OIDC trusted publishing through the protected
+`pypi` GitHub environment, so no long-lived PyPI token is stored in GitHub. After
+PyPI accepts the artifacts, the workflow creates a GitHub release with generated
+notes and attaches both distributions.
