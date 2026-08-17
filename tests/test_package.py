@@ -19,6 +19,26 @@ def test_distribution_version() -> None:
     assert version("fastapi-langgraph-server") == "0.1.0"
 
 
+def test_distribution_discovery_metadata() -> None:
+    project_metadata = metadata("fastapi-langgraph-server")
+    keywords = set((project_metadata["Keywords"] or "").split(","))
+    project_urls = set(project_metadata.get_all("Project-URL") or [])
+
+    assert {
+        "agentic-ai",
+        "ai-agents",
+        "fastapi",
+        "langgraph",
+        "remotegraph",
+        "self-hosted",
+        "streaming",
+    } <= keywords
+    assert (
+        "Security, https://github.com/s-block/fastapi-langgraph-server/security/policy"
+        in project_urls
+    )
+
+
 def test_redis_checkpointer_is_an_optional_dependency() -> None:
     requirements = metadata("fastapi-langgraph-server").get_all("Requires-Dist") or []
 

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Reworked the README around self-hosted, FastAPI-native, tested `RemoteGraph`
+  workflows and documented the compatibility boundaries more prominently.
+- Expanded PyPI and GitHub discovery metadata with project keywords, security
+  links, topics, and outcome-oriented positioning.
+
+## [0.1.0] - 2026-08-01
+
 ### Added
 
 - Initial Python package, quality, CI, and release scaffolding.
@@ -40,3 +49,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Alpine Linux, and automatic GitHub releases with attached distributions.
 
 [Unreleased]: https://github.com/s-block/fastapi-langgraph-server/commits/main
+[0.1.0]: https://pypi.org/project/fastapi-langgraph-server/0.1.0/

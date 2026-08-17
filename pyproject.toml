@@ -5,7 +5,22 @@ build-backend = "hatchling.build"
 [project]
 name = "fastapi-langgraph-server"
 version = "0.1.0"
-description = "A typed FastAPI server compatible with LangGraph RemoteGraph clients"
+description = "Self-host LangGraph with a typed, async RemoteGraph-compatible FastAPI API"
+keywords = [
+    "agentic-ai",
+    "ai-agents",
+    "asgi",
+    "asyncio",
+    "checkpointing",
+    "fastapi",
+    "langchain",
+    "langgraph",
+    "llm",
+    "redis",
+    "remotegraph",
+    "self-hosted",
+    "streaming",
+]
 readme = "README.md"
 requires-python = ">=3.12"
 license = { file = "LICENSE" }
@@ -40,6 +55,7 @@ redis = ["langgraph-checkpoint-redis>=0.5.1,<1"]
 Changelog = "https://github.com/s-block/fastapi-langgraph-server/blob/main/CHANGELOG.md"
 Documentation = "https://github.com/s-block/fastapi-langgraph-server/tree/main/docs"
 Issues = "https://github.com/s-block/fastapi-langgraph-server/issues"
+Security = "https://github.com/s-block/fastapi-langgraph-server/security/policy"
 Source = "https://github.com/s-block/fastapi-langgraph-server"
 
 [dependency-groups]

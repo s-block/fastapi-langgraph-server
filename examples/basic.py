@@ -1,4 +1,4 @@
-"""Minimal checkpointed LangGraph served through FastAPI."""
+"""Minimal LangGraph served through a standalone FastAPI application."""
 
 from typing import TypedDict
 

@@ -2,9 +2,9 @@
 
 ## Supported versions
 
-Before the first release, security fixes are applied to `main`. After releases
-begin, fixes are provided for the latest released version. This project is alpha
-software and may introduce breaking changes while addressing security issues.
+Security fixes are applied to `main` and the latest released version. This
+project is alpha software and may introduce breaking changes while addressing
+security issues.
 
 ## Reporting a vulnerability
 

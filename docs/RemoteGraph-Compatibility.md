@@ -4,6 +4,9 @@ The implemented LangGraph HTTP operations are listed below. Compatibility is
 tested against the locked `langgraph>=1.2,<2` environment and separate
 lowest-direct and highest-eligible dependency resolutions in CI.
 
+This is a tested subset of the LangGraph Server API, not a claim of complete
+Agent Server protocol compatibility.
+
 ## Endpoints
 
 | Operation | Endpoint | Coverage |
@@ -20,6 +23,22 @@ lowest-direct and highest-eligible dependency resolutions in CI.
 | Assistant lookup/search | `/assistants/...` | Endpoint tests |
 | Graph/schema discovery | `/assistants/{assistant_id}/graph`, `/schemas` | Endpoint tests |
 | Thread creation/lookup | `POST /threads`, `GET /threads/{thread_id}` | Endpoint tests |
+
+## Scope boundaries
+
+Only the endpoints listed above are implemented. The server does not provide the
+remaining Agent Server surface, including background run management, cron jobs,
+assistant mutation and version management, or stores for long-term memory.
+
+Advanced run controls are rejected explicitly rather than ignored. These include
+interrupt controls and resume commands, webhooks, delayed or resumable runs,
+subgraph streaming, background continuation after disconnect, retained stateless
+runs, and multitask strategies other than `reject`. Subgraph state retrieval is
+also unsupported.
+
+The compatibility tests exercise asynchronous `RemoteGraph` invocation,
+streaming, graph discovery, state, history, state updates, and SDK thread
+deletion. Operations not present in the table should be treated as unsupported.
 
 Native stream modes `values`, `updates`, `messages`, `custom`, and `debug` are
 forwarded as named Server-Sent Events. `messages-tuple` is accepted at the HTTP
