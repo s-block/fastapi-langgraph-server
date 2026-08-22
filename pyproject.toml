@@ -75,7 +75,7 @@ dev = [
     "twine>=6,<8",
     "types-cachetools>=5.5",
     "uvicorn>=0.35,<1",
-    "zizmor>=1.28,<2",
+    "zizmor>=1.29.0,<2",
 ]
 
 [tool.hatch.build.targets.wheel]
