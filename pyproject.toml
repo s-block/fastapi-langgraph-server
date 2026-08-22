@@ -61,7 +61,7 @@ Source = "https://github.com/s-block/fastapi-langgraph-server"
 [dependency-groups]
 dev = [
     "bandit>=1.9,<2",
-    "coverage>=7.10",
+    "coverage>=7.15.4",
     "detect-secrets>=1.5,<2",
     "httpx>=0.28,<1",
     "httpx2>=2.9,<3",
